@@ -6,6 +6,7 @@ var Ncolonnes;
 var prochainJoueur = 1;
 var longueur; // longueur minimal pour gagner
 var joueurs;
+var profondeur = 1;// profondeur recherche ordinateur
 
 function output(id){
     xml_res = "";
@@ -39,7 +40,7 @@ function createField(formid, id,xmlid, htmlid="html")  {
         plateau += '\n<div class="morpion-row">\n';
         for(j = 0; j< Ncolonnes; j++) {
             plateau += '<div class="morpion-button" type="text" onclick="update(' + i + ',' + j + ', \'' + id + '\')" id="' + id + '_' + i + '_' + j + '"> </div>';
-            tab[i][j]  = "";
+            tab[i][j]  = 0;
         }
         plateau += '\n</div>';
     }
@@ -65,7 +66,7 @@ function update(i,j, id) {
 
     tab[i][j] = prochainJoueur;
     btn.style.backgroundColor = joueurs[prochainJoueur-1];
-    if (checkWin(prochainJoueur)) {
+    if (plusLongueRangee(prochainJoueur).length == longueur) {
         field.innerHTML = "Joueur <span style='color:" + joueurs[prochainJoueur-1] +";'>" + prochainJoueur + "</span> a gagné !";
     }
     prochainJoueur = (prochainJoueur < joueurs.length) ? prochainJoueur+1 : 1;
@@ -122,24 +123,112 @@ function checkWin(symbole) {
         if (diago.indexOf(motif) != -1)
             return 1;
     }
-    //
-    //
-    //
-    // if (tab[0][0]==tab[0][1] && tab[0][0]==tab[0][2] && tab[0][0]==symbole)
-    //      return 1
-    //  if (tab[1][0]==tab[1][1] && tab[1][0]==tab[1][2] && tab[1][0]==symbole)
-    //      return 1
-    //  if (tab[2][0]==tab[2][1] && tab[2][0]==tab[2][2] && tab[2][2]==symbole)
-    //      return 1
-    //  if (tab[0][0]==tab[1][0] && tab[0][0]==tab[2][0] && tab[0][0]==symbole)
-    //      return 1
-    //  if (tab[0][1]==tab[1][1] && tab[1][1]==tab[2][1] && tab[0][1]==symbole)
-    //      return 1
-    //  if (tab[0][2]==tab[1][2] && tab[1][2]==tab[2][2] && tab[0][2]==symbole)
-    //      return 1
-    //  if (tab[0][0]==tab[1][1] && tab[1][1]==tab[2][2] && tab[0][0]==symbole)
-    //      return 1
-    //  if (tab[0][2]==tab[1][1] && tab[2][0]==tab[0][2] && tab[0][2]==symbole)
-    //      return 1
+
     return 0;
+}
+
+function ordinateur() {
+    // trouver la rangée la plus longue
+
+    // pour toutes les cases ou le joueur a joué, on regarde dans les cases à côté s'il risque de gagner
+    for(i = 0; i< Nlignes; i++) {
+        for(j = 0; j< Ncolonnes; j++) {
+            if(tab[i][j] == 1) {
+                ctab = JSON.parse(JSON.stringify(tab));
+                checkPotentialWin(i,j);
+            }
+        }
+    }
+}
+
+// retourne la taille et l'indice de la plus longue chaine continue de [symbole]
+function longueurMotif(string, symbole) {
+    regex = new RegExp(symbole + "+", "g");
+    motifs = string.match(regex)
+    if (motifs === null) { motifs = [];}
+    max = Math.max.apply(null, motifs.map(w => w.length))
+    if (max < 0) max = 0;
+    return [max, string.indexOf(symbole.toString().repeat(max))]
+}
+
+// retourne un tableau de positions avec la plus longue chaine continue de [symbole] depuis tab
+function plusLongueRangee(symbole) {
+    maxLong = 0;
+    positions = [];
+
+    // check lignes
+    for(i = 0; i < Nlignes; i++) {
+        [max, argmax] = longueurMotif(tab[i].join(""), symbole)
+        if (max > maxLong) {
+            positions = [];
+            for(j = argmax;j<argmax+max;j++)
+                positions.push([i,j])
+            maxLong = max;
+        }
+    }
+
+
+    // check colonnes
+    for(j = 0; j < Ncolonnes; j++) {
+        colonne = "";
+        for(i = 0; i < Nlignes; i++)
+            colonne += tab[i][j];
+        [max, argmax] = longueurMotif(colonne, symbole)
+        if (max > maxLong) {
+            positions = [];
+            maxLong = max;
+            for(i = argmax;i<argmax+max;i++)
+                positions.push([i,j])
+        }
+    }
+
+    // check diagonales gauche/haut -> droite/bas
+    for (var n = longueur - 1; n < Ncolonnes + Nlignes - 1 - longueur; n ++) {
+        var r = n;
+        var c = 0;
+        var diago = '';
+        var dposition = [];
+        while (r >= 0 && c < Ncolonnes) {
+            if (r < Nlignes) {
+                diago += tab[r][c];
+                dposition.push([r,c]);
+            }
+            r -= 1;
+            c += 1;
+        }
+        [max, argmax] = longueurMotif(diago, symbole)
+        if (max > maxLong) {
+            maxLong = max;
+            positions = dposition.slice(argmax, argmax+max);
+        }
+    }
+
+    // check diagonales gauche/haut <- droite/bas
+    for (var n =  Ncolonnes + Nlignes - 1; n >= 00; n--) {
+        var r = n;
+        var c = Ncolonnes-1;
+        var diago = '';
+        var dposition = [];
+        while (r >= 0 && c >= 0) {
+            if (r < Ncolonnes) {
+                diago += tab[r][c];
+                dposition.push([r,c]);
+            }
+            r -= 1;
+            c -= 1;
+        }
+        [max, argmax] = longueurMotif(diago, symbole)
+        if (max > maxLong) {
+            maxLong = max;
+            positions = dposition.slice(argmax, argmax+max);
+        }
+    }
+
+    return positions
+}
+
+
+
+function checkPotentialWin(tab, i,j) {
+
 }
