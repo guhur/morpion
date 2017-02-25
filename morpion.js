@@ -4,6 +4,8 @@ var html_output;
 var Nlignes;
 var Ncolonnes;
 var prochainJoueur = 1;
+var longueur; // longueur minimal pour gagner
+
 
 function output(id){
     xml_res = "";
@@ -18,7 +20,7 @@ function output(id){
 
     content = document.getElementById(id).innerHTML;
     content = content.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {   return '&#'+i.charCodeAt(0)+';'; });
-    html_output.innerHTML = '<pre><code class="html">' + content + '</code></pre>';
+    html_output.innerHTML = '<pre><code class="html">' + content + '</code></p  re>';
     hljs.highlightBlock(html_output);
     hljs.highlightBlock(xml);
     //
@@ -34,7 +36,7 @@ function createField(formid, id,xmlid, htmlid="html")  {
     plateau = "";
     for(i = 0; i< Nlignes; i++) {
         tab[i] = new Array(Ncolonnes);
-        plateau += '\n<div class="morpion-row">';
+        plateau += '\n<div class="morpion-row">\n';
         for(j = 0; j< Ncolonnes; j++) {
             plateau += '<div class="morpion-button" type="text" onclick="update(' + i + ',' + j + ', \'' + id + '\')" id="' + id + '_' + i + '_' + j + '"> </div>';
             tab[i][j]  = "";
@@ -45,6 +47,7 @@ function createField(formid, id,xmlid, htmlid="html")  {
     xml = document.getElementById(xmlid);
     html_output = document.getElementById(htmlid);
     output(id);
+    longueur = Math.min(Ncolonnes, Nlignes, 5);
     return plateau;
 }
 
@@ -53,10 +56,10 @@ function createField(formid, id,xmlid, htmlid="html")  {
 function update(i,j, id) {
     field = document.getElementById(id);
     btn = document.getElementById(id + '_' + i + '_' + j);
-    // if (input.value != prochainJoueur) {
-    //     input.value = ""
-    //     alert("Ce n'est pas à vous de jouer !");
-    // } else {
+
+    if(tab[i][j] != 0) {
+        return;
+    }
     if (prochainJoueur == 1) {
             tab[i][j] = 1;
             prochainJoueur = 2;
@@ -78,21 +81,72 @@ function update(i,j, id) {
 
 
 function checkWin(symbole) {
-    if (tab[0][0]==tab[0][1] && tab[0][0]==tab[0][2] && tab[0][0]==symbole)
-         return 1
-     if (tab[1][0]==tab[1][1] && tab[1][0]==tab[1][2] && tab[1][0]==symbole)
-         return 1
-     if (tab[2][0]==tab[2][1] && tab[2][0]==tab[2][2] && tab[2][2]==symbole)
-         return 1
-     if (tab[0][0]==tab[1][0] && tab[0][0]==tab[2][0] && tab[0][0]==symbole)
-         return 1
-     if (tab[0][1]==tab[1][1] && tab[1][1]==tab[2][1] && tab[0][1]==symbole)
-         return 1
-     if (tab[0][2]==tab[1][2] && tab[1][2]==tab[2][2] && tab[0][2]==symbole)
-         return 1
-     if (tab[0][0]==tab[1][1] && tab[1][1]==tab[2][2] && tab[0][0]==symbole)
-         return 1
-     if (tab[0][2]==tab[1][1] && tab[2][0]==tab[0][2] && tab[0][2]==symbole)
-         return 1
-    return 0
+    motif = symbole.toString().repeat(longueur);
+
+    // check lignes
+    for(i = 0; i < Nlignes; i++) {
+        ligne = tab[i].join("")
+        if (ligne.indexOf(motif) != -1)
+            return 1;
+    }
+
+
+    // check colonnes
+    for(j = 0; j < Ncolonnes; j++) {
+        colonne = "";
+        for(i = 0; i < Nlignes; i++)
+            colonne += tab[i][j];
+        if (colonne.indexOf(motif) != -1)
+            return 1;
+    }
+
+    // check diagonales gauche/haut -> droite/bas
+    for (var n = longueur - 1; n < Ncolonnes + Nlignes - 1 - longueur; n ++) {
+        var r = n;
+        var c = 0;
+        var diago = '';
+        while (r >= 0 && c < Ncolonnes) {
+            if (r < Nlignes)
+                diago += tab[r][c];
+            r -= 1;
+            c += 1;
+        }
+        if (diago.indexOf(motif) != -1)
+            return 1;
+    }
+
+    // check diagonales gauche/haut <- droite/bas
+    for (var n =  Nlignes - 1; n >= -Ncolonnes+1; n--) {
+        var r = 0;
+        var c = 0;
+        var diago = '';
+        while (r < Nlignes && c < Ncolonnes) {
+            if (r >= 0)
+                diago += tab[r][c];
+            r += 1;
+            c += 1;
+        }
+        if (diago.indexOf(motif) != -1)
+            return 1;
+    }
+    //
+    //
+    //
+    // if (tab[0][0]==tab[0][1] && tab[0][0]==tab[0][2] && tab[0][0]==symbole)
+    //      return 1
+    //  if (tab[1][0]==tab[1][1] && tab[1][0]==tab[1][2] && tab[1][0]==symbole)
+    //      return 1
+    //  if (tab[2][0]==tab[2][1] && tab[2][0]==tab[2][2] && tab[2][2]==symbole)
+    //      return 1
+    //  if (tab[0][0]==tab[1][0] && tab[0][0]==tab[2][0] && tab[0][0]==symbole)
+    //      return 1
+    //  if (tab[0][1]==tab[1][1] && tab[1][1]==tab[2][1] && tab[0][1]==symbole)
+    //      return 1
+    //  if (tab[0][2]==tab[1][2] && tab[1][2]==tab[2][2] && tab[0][2]==symbole)
+    //      return 1
+    //  if (tab[0][0]==tab[1][1] && tab[1][1]==tab[2][2] && tab[0][0]==symbole)
+    //      return 1
+    //  if (tab[0][2]==tab[1][1] && tab[2][0]==tab[0][2] && tab[0][2]==symbole)
+    //      return 1
+    return 0;
 }
