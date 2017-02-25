@@ -5,7 +5,7 @@ var Nlignes;
 var Ncolonnes;
 var prochainJoueur = 1;
 var longueur; // longueur minimal pour gagner
-
+var joueurs;
 
 function output(id){
     xml_res = "";
@@ -48,6 +48,8 @@ function createField(formid, id,xmlid, htmlid="html")  {
     html_output = document.getElementById(htmlid);
     output(id);
     longueur = Math.min(Ncolonnes, Nlignes, 5);
+    tous_joueurs = new Array("#337ab7", "#ce4844", "#8B008B", "#FF7F50", "#ADFF2F", "#FFDEAD", "#8B4513", "#2F4F4F", "#696969", "#FFF0F5");
+    joueurs = tous_joueurs.slice(0,inputs[2].value)
     return plateau;
 }
 
@@ -60,23 +62,14 @@ function update(i,j, id) {
     if(tab[i][j] != 0) {
         return;
     }
-    if (prochainJoueur == 1) {
-            tab[i][j] = 1;
-            prochainJoueur = 2;
-            btn.style.backgroundColor = "#337ab7";
-    } else if (prochainJoueur == 2)  {
-            tab[i][j] = 2;
-            prochainJoueur = 1;
-            btn.style.backgroundColor = "#ce4844";
-    }
 
+    tab[i][j] = prochainJoueur;
+    btn.style.backgroundColor = joueurs[prochainJoueur-1];
+    if (checkWin(prochainJoueur)) {
+        field.innerHTML = "Joueur <span style='color:" + joueurs[prochainJoueur-1] +";'>" + prochainJoueur + "</span> a gagné !";
+    }
+    prochainJoueur = (prochainJoueur < joueurs.length) ? prochainJoueur+1 : 1;
     output(id);
-    if (checkWin("1")) {
-        alert("Joueur 1 a gagné");
-    }
-    else if (checkWin("2")) {
-        alert("Joueur 2 a gagné");
-    }
 }
 
 

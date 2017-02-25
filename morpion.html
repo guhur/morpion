@@ -20,12 +20,23 @@
 
 
     <h1>Taille du terrain</h1>
-    <div id="init">
-
-        <input type="text" name="lignes" value="3"/>
-        <input type="text" name="colonnes" value="3"/>
-        <button onclick='createField("init", "field", "xml")' >Créer </button>
+    <div id="init"  class="form-inline">
+        <div class="input-group">
+         <div class="input-group-addon">Lignes</div>
+         <input type="text" class="form-control" name="lignes"  value="3">
+       </div>
+       <div class="input-group">
+        <div class="input-group-addon">Colonnes</div>
+        <input type="text" class="form-control" name="colonnes"  value="3">
+      </div>
+      <div class="input-group">
+       <div class="input-group-addon">Joueurs</div>
+       <input type="range" class="form-control" name="joueurs" step="1" min="2" max="9" value="2" onchange="document.getElementById('joueurs').innerHTML = this.value">
+       <div class="input-group-addon" id='joueurs'>2</div>
+     </div>
+        <button class="btn btn-primary" onclick='createField("init", "field", "xml")' >Créer</button>
     </div>
+
 
     <h1>Terrain</h1>
     <div id="field">
